@@ -1,0 +1,95 @@
+- name: Gather facts
+  setup:
+
+- name: Set variables
+  set_fact:
+    checkmk_agent: "{{ ansible_default_ipv4.address }}"
+    agent_hostname: "{{ ansible_hostname }}"
+
+
+- name: Download CRE Agent
+  ansible.builtin.uri:
+    url:
+      "http://{{ checkmk_server }}/monitoring/check_mk/api/1.0/domain-types/agent/actions/download/invoke?\
+      os_type={{ os_type }}"
+    validate_certs: "true"
+    dest: "/root/check-mk-agent.rpm"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ automation_user }} {{ automation_secret }}"
+      Accept: "application/octet-stream"
+
+- name: Install CRE Agent
+  ansible.builtin.dnf:
+    name: "/root/check-mk-agent.rpm"
+    state: present
+    disable_gpg_check: true
+
+- name: Configure Firewall for Agent to allow checkmk services to access the agent
+  ansible.posix.firewalld:
+    permanent: true
+    immediate: true
+    state: enabled
+    rich_rule: rule family="ipv4" source address={{ checkmk_server }} port port="6556" protocol="tcp" accept
+    zone: "public"
+
+- name: Create host on server
+  checkmk.general.host:
+    server_url: "http://{{ checkmk_server }}:80/"
+    site: "{{ server_site_name }}"
+    validate_certs: "{{ validate_certs }}"
+    automation_user: "{{ automation_user }}"
+    automation_secret: "{{ automation_secret }}"
+    folder: "/"
+    name: "{{ agent_hostname }}"
+    attributes:
+      ipaddress: "{{ checkmk_agent }}"
+    state: "present"
+  register: checkmk_agent_create_result
+  delegate_to: "localhost"
+
+# This will only work if you have HTTPS enabled on your server
+# - name: Register Agent for TLS.
+#   ansible.builtin.shell: |
+#     cmk-agent-ctl register -H rocky_agent \
+#     -s "{{ checkmk_server }}" -i monitoring \
+#     -U "{{ automation_user }}" -P "{{ automation_secret }}" --trust-cert
+#   # no_log: true
+#   register: checkmk_agent_tls_state
+#   changed_when: output == 0
+
+- name: Fetch fresh monitoring data from host
+  become: false
+  checkmk.general.discovery:
+    server_url: "http://{{ checkmk_server }}:80/"
+    site: "{{ server_site_name }}"
+    validate_certs: "{{ validate_certs }}"
+    automation_user: "{{ automation_user }}"
+    automation_secret: "{{ automation_secret }}"
+    host_name: "{{ agent_hostname }}"
+    state: "refresh"
+  throttle: 0
+  delegate_to: "localhost"
+  when: true
+  register: checkmk_agent_refresh_state
+  retries: 3
+  delay: 10
+  until: "checkmk_agent_refresh_state.changed | bool"
+
+- name: Update monitored services and labels on host
+  become: false
+  checkmk.general.discovery:
+    server_url: "http://{{ checkmk_server }}:80/"
+    site: "{{ server_site_name }}"
+    validate_certs: "{{ validate_certs }}"
+    automation_user: "{{ automation_user }}"
+    automation_secret: "{{ automation_secret }}"
+    host_name: "{{ agent_hostname }}"
+    state: "fix_all"
+  throttle: 0
+  delegate_to: "localhost"
+  when: true
+  register: checkmk_agent_discovery_state
+  retries: 3
+  delay: 10
+  until: "checkmk_agent_discovery_state.changed | bool"
