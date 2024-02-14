@@ -1,0 +1,43 @@
+---
+- name: Install Checkmk Server on localhost
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  roles:
+    - role: checkmk.general.server
+      vars:
+        checkmk_server_site_id: "checkmk-cyberark-epm"
+        checkmk_server_site_alias: "checkmk-cybarark-epm"
+        checkmk_server_site_timezone: "Europe/Berlin"
+        checkmk_server_version: "2.2.0p19"
+        checkmk_server_edition: "cre"
+        checkmk_server_admin_password: "VMWare7@AP"
+        checkmk_server_url: "http://localhost:8080/"
+        checkmk_server_validate_certs: false
+        checkmk_server_apache_tcp_port: 8080
+        # Add any other necessary variables here.
+
+- name: Install Checkmk Agent on Windows Hosts
+  hosts: windows
+  gather_facts: no
+  roles:
+    - role: checkmk.general.agent
+      vars:
+        checkmk_agent_target_os: "windows"
+        checkmk_server_url: "http://10.0.0.1/"
+        checkmk_server_validate_certs: false
+        checkmk_agent_install_method: "msi"
+        # Add any other necessary variables for Windows hosts here.
+
+- name: Install Checkmk Agent on Ubuntu Hosts
+  hosts: ubuntu
+  become: yes
+  roles:
+    - role: checkmk.general.agent
+      vars:
+        checkmk_agent_target_os: "linux"
+        checkmk_server_url: "http://10.0.0.1/"
+        checkmk_server_validate_certs: false
+        checkmk_agent_install_method: "deb"
+        # Add any other necessary variables for Ubuntu hosts here.
+
