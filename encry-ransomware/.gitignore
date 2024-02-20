@@ -1,1 +1,2 @@
-encry-ransomware/keys/.
+keys/private_key.pem
+keys/public_key.pem
