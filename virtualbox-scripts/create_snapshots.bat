@@ -1,8 +1,8 @@
 @echo off
 SET PATH=%PATH%;C:\Program Files\Oracle\VirtualBox
 SET VBoxManagePath=C:\Program Files\Oracle\VirtualBox\VBoxManage.exe
-SET SnapshotName=Original
-SET SnapshotDescription=Original installed VM. Working AD.
+SET SnapshotName=Removed network adapter
+SET SnapshotDescription=Removed all network adapter except for interal network adapter
 
 echo Creating snapshots for all VMs...
 
