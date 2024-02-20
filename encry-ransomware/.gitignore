@@ -1,2 +1,6 @@
 keys/private_key.pem
 keys/public_key.pem
+keys/.
+
+venv
+__pycache__

