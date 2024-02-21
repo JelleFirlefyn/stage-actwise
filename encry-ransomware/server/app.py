@@ -18,4 +18,4 @@ def get_public_key():
 
 
 if __name__ == '__main__':
-    app.run(ssl_context='adhoc', host='0.0.0.0')
+    app.run(ssl_context='adhoc', host='0.0.0.0', port=5050)

