@@ -1,5 +1,5 @@
 import os
-
+import webbrowser
 
 def create_message():
     html_content = '''<!DOCTYPE html>
@@ -111,6 +111,8 @@ def create_message():
         file.write(html_content)
 
     print("HTML file created successfully!")
+
+    webbrowser.open('file://' + os.path.join(home_dir, 'Desktop', 'OPEN_THIS.html'))
 
 
 def delete_message():

