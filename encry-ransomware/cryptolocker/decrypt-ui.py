@@ -104,19 +104,32 @@ def decrypt():
     if not private_key_str.strip():
         messagebox.showerror("Error", "Please enter the private key.")
         return
-    decrypt_directory_with_key(private_key_str)
+    # decrypt_directory_with_key(private_key_str)  # Add your decryption function here
     messagebox.showinfo("Success", "Decryption process is completed.")
 
 # Create the main window
 window = tk.Tk()
 window.title("Decryption Tool")
+window.geometry("1200x700")  # Set window size
+window.configure(bg='black')
+
+# Custom font
+titileFont = ("Courier New", 22)
+customFont = ("Courier New", 12)
+# Styling
+text_area_style = {'bg': 'white', 'fg': 'black', 'insertbackground': 'white'}  # Cursor color
+button_style = {'activebackground': 'black', 'activeforeground': 'green', 'bg': 'green', 'fg': 'white', 'font': customFont, 'width': 20, 'height': 5}
+
+# Create a title label
+title_label = tk.Label(window, text="Decryption Tool", font=titileFont, bg='black', fg='#fff')
+title_label.pack(pady=(10, 20))  # Add some padding above and below the title
 
 # Create a text area for the private key input
-text_area = scrolledtext.ScrolledText(window, wrap=tk.WORD, width=40, height=10)
+text_area = scrolledtext.ScrolledText(window, wrap=tk.WORD, width=69, height=30, **text_area_style)
 text_area.pack(pady=10)
 
 # Create a decrypt button
-decrypt_button = tk.Button(window, text="Decrypt", command=decrypt)
+decrypt_button = tk.Button(window, text="Decrypt", command=decrypt, **button_style)
 decrypt_button.pack(pady=5)
 
 window.mainloop()
