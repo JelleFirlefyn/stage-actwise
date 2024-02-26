@@ -112,7 +112,7 @@ def main():
         else:
             print(f"Directory does not exist: {directory}")
 
-    create_message()
+    create_message(id)
 
 
 main()

@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from keygen import generate_keys, generate_random_token
+from timestamp import log_time
 
 app = Flask(__name__)
 
@@ -12,6 +13,7 @@ PRIVATE_KEY_PATH = "keys/private_key.pem"
 def get_public_key():
     id = generate_random_token(24,32)
     generate_keys(id)
+    log_time(id)
     with open(f'keys/{id}/public_key.pem', 'r') as file:
         public_key = file.read()
     return jsonify({"id": id,"publickey": public_key,})

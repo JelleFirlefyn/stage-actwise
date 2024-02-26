@@ -1,3 +1,3 @@
 # How to set up the server
 
-flask run --port=5050
+flask run --host=0.0.0.0 --port=5050

