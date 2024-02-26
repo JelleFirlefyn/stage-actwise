@@ -1,7 +1,8 @@
 import os
 import webbrowser
+import requests
 
-def create_message(id):
+def create_message(server, port, id):
     html_content = f'''<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -69,38 +70,61 @@ def create_message(id):
         <div class="footer">
             <p class="note">Remember, always install CyberArk EPM!</p>
         </div>
-        <script>
-            // Set the date we're counting down to
-            var countDownDate = new Date();
-            countDownDate.setHours(countDownDate.getHours() + 48); // Set the countdown to 48 hours
-
-            // Update the countdown every 1 second
-            var timer = setInterval(function() {{
-                // Get today's date and time
-                var now = new Date().getTime();
-                
-                // Find the time remaining
-                var timeRemaining = countDownDate - now;
-                
-                // Time calculations for days, hours, minutes, and seconds
-                var days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-                var hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                var minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-                
-                // Output the result in an element with id="time"
-                document.getElementById("time").innerHTML = days + "d " 
-                    + (hours < 10 ? "0" + hours : hours) + "h "
-                    + (minutes < 10 ? "0" + minutes : minutes) + "m " 
-                    + (seconds < 10 ? "0" + seconds : seconds) + "s ";
-                
-                // If the countdown is over, write some text 
-                if (timeRemaining < 0) {{
-                    clearInterval(timer);
-                    document.getElementById("time").innerHTML = "EXPIRED";
+       <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                // Function to update the timer on the page
+                function updateTimer(days, hours, minutes, seconds) {{
+                    document.getElementById("time").innerHTML = days + "d " 
+                        + (hours < 10 ? "0" + hours : hours) + "h "
+                        + (minutes < 10 ? "0" + minutes : minutes) + "m " 
+                        + (seconds < 10 ? "0" + seconds : seconds) + "s ";
                 }}
-            }}, 1000);
+
+                // Fetch the remaining time from the server
+                fetch('http://{server}:{port}/time/{id}/')  // Replace with the correct server URL
+                    .then(response => response.json())
+                    .then(data => {{
+                        if (data.message) {{
+                            // The timer has expired
+                            document.getElementById("time").innerHTML = data.message;
+                        }} else {{
+                            // Update the timer with the data returned from the server
+                            updateTimer(data.days, data.hours, data.minutes, data.seconds);
+                            
+                            // Set an interval to update the timer every second
+                            setInterval(function() {{
+                                // Assuming the server provides the exact time left,
+                                // we subtract one second and update the timer
+                                data.seconds--;
+                                if (data.seconds < 0) {{
+                                    data.minutes--;
+                                    data.seconds = 59;
+                                }}
+                                if (data.minutes < 0) {{
+                                    data.hours--;
+                                    data.minutes = 59;
+                                }}
+                                if (data.hours < 0) {{
+                                    data.days--;
+                                    data.hours = 23;
+                                }}
+                                if (data.days < 0) {{
+                                    // Stop the countdown when the time is up
+                                    clearInterval(timer);
+                                    document.getElementById("time").innerHTML = "EXPIRED";
+                                    return;
+                                }}
+                                updateTimer(data.days, data.hours, data.minutes, data.seconds);
+                            }}, 1000);
+                        }}
+                    }})
+                    .catch(error => {{
+                        console.error('Error fetching the timer:', error);
+                        document.getElementById("time").innerHTML = "Error fetching time";
+                    }});
+            }});
         </script>
+
     </body>
     </html>
     '''
