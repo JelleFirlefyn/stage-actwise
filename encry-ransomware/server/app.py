@@ -3,7 +3,6 @@ from keygen import generate_keys, generate_random_token
 from timestamp import log_time, get_time_left
 from flask_cors import CORS, cross_origin
 
-
 app = Flask(__name__)
 CORS(app)
 
