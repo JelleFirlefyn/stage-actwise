@@ -102,7 +102,11 @@ def decrypt():
     if not private_key_str.strip():
         messagebox.showerror("Error", "Please enter the private key.")
         return
-    decrypt_directory_with_key(private_key_str)  # Add your decryption function here
+    try:
+        decrypt_directory_with_key(private_key_str)  # Add your decryption function here
+    except Exception as e:
+        messagebox.showerror("Error", f"An unexpected error occurred: {e}")
+        return
     messagebox.showinfo("Success", "Decryption process is completed.")
 
 # Create the main window
