@@ -25,6 +25,12 @@ def get_public_key():
 def get_time(id):
     return jsonify(get_time_left(id))
 
+@app.route('/wordlist/<wl>/', methods=['GET'])
+def get_wordlist(wl):
+    with open(f"word_lists/{wl}.txt", "r") as file:
+        l = file.readlines()
+    return l
+
 
 if __name__ == '__main__':
     app.run(ssl_context='adhoc', host='0.0.0.0', port=5050)
