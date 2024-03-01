@@ -29,7 +29,7 @@ To encrypt files, use the `encrypt.ps1` script. This script recursively encrypts
 .\encrypt.ps1 -FolderPath "C:\Path\To\Your\Directory" -Password "YourStrongPassword"
 ```
 
-**Parameters:**
+Parameters:
 
 - `-FolderPath`: The path to the directory containing the files you wish to encrypt.
 - `Password`: The password used to generate the encryption key. Remember this password, as it will be required for decryption.
@@ -42,7 +42,7 @@ To decrypt your files, use the decrypt.ps1 script with the same password used fo
 .\decrypt.ps1 -FolderPath "C:\Path\To\Your\Encrypted\Directory" -Password "YourStrongPassword"
 ```
 
-**Parameters**
+Parameters
 
 - `FolderPath`: The path to the directory containing the files you wish to decrypt.
 - `Password`: The password used during the encryption process.
