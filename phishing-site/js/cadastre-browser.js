@@ -7,22 +7,6 @@ var hasItems = false;
 var jsondata;
 
 
-document.addEventListener('DOMContentLoaded', function(){
-let pagelanguage = document.documentElement.lang;
-let requestURL = 'https://opendata.fin.belgium.be/download/JSON/config_' + pagelanguage.toUpperCase() + '.json';
-let request = new XMLHttpRequest();
-request.open('GET', requestURL);
-request.responseType = 'json';
-request.onload = function() {
-  jsondata = request.response;
-  fillFilters(jsondata);
-  hasItems = renderData(jsondata, sdataset,sversion,sformat, sprojection );
-  if (hasItems) {makeLikeATree();}  
-}
-request.send();
-});
-
-
 function fillFilters(obj) 
 {	
 // process the json to discover all possible unique values for each filter and update the select fields.
