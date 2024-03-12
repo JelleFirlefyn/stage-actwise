@@ -2,5 +2,7 @@ keys/private_key.pem
 keys/public_key.pem
 keys/.
 
+word_lists/test_password_list.txt
+
 venv
 __pycache__
