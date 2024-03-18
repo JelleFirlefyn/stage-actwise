@@ -1,3 +1,6 @@
 ansible.cfg
 vfagentsetupx64.msi
 epm-ubuntu.x86_64.deb
+GPG-KEY-CyberArk
+CyberArkEPMAgentSetupLinux.config
+signing.pol

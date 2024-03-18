@@ -1,0 +1,1 @@
+ansible-playbook cyberark_epm-agent_install.yaml -e "device_ip=10.0.0.1" -K
