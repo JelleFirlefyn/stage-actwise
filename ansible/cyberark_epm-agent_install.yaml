@@ -1,0 +1,181 @@
+- name: Setup server for CyberArk EPM Agent installation files
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars:
+    agent_files_host_directory: "{{ playbook_dir }}/agent_installation_files"  # Generalized variable name
+    agent_files_container_path: "/usr/src/agent_installation_files"  # Path inside the container
+    agent_files_container_port: "4141"  # Port to serve files
+    # List of files to be served - add all necessary filenames here
+    agent_files:
+      - vfagentsetupx64.msi
+      - GPG-KEY-CyberArk
+      - epm-ubuntu.x86_64.deb
+      - CyberArkEPMAgentSetupLinux.config
+      - signing.pol
+
+  tasks:
+    - name: Ensure directory for agent installation files exists
+      ansible.builtin.file:
+        path: "{{ agent_files_host_directory }}"
+        state: directory
+
+    - name: Copy agent installation files to the directory
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ item }}"
+        dest: "{{ agent_files_host_directory }}/{{ item }}"
+        mode: '0644'
+      loop: "{{ agent_files }}"
+
+    - name: Run Docker container serving the agent installation files
+      ansible.builtin.docker_container:
+        name: agent-files-server
+        image: python:3
+        command: /bin/sh -c "python -m http.server"
+        ports:
+          - "{{ agent_files_container_port }}:8000"
+        volumes:
+          - "{{ agent_files_host_directory }}:{{ agent_files_container_path }}"
+        working_dir: "{{ agent_files_container_path }}"
+        detach: yes
+        state: started
+        recreate: yes
+        pull: yes
+
+- name: Install CyberArk EPM Agent on Windows machines
+  hosts: windowshosts
+  gather_facts: no
+  vars:
+    installation_key: ""
+    dispatcher_url: ""
+    register_token: ""
+    set_id: ""
+    set_name: ""
+    config_version: ""
+    iv: ""
+    set_key: ""
+    sig: "="
+    msi_container_port: "4141"
+    msi_filename: "vfagentsetupx64.msi"
+    device_ip: hostvars['localhost']['ansible_default_ipv4']['address']
+    agent_dir: 'C:\Program Files\CyberArk\Endpoint Privilege Manager\Agent'
+  tasks:
+    - name: Check if CyberArk EPM Agent directory exists
+      ansible.windows.win_stat:
+        path: "{{ agent_dir }}"
+      register: agent_dir
+
+    - name: WARNING
+      ansible.builtin.debug:
+        msg: AGENT HAS ALREADY BEEN INSTALLED, CONTINUING TO NEXT STEP
+      when: agent_dir.stat.exists
+
+    - name: Create temp directory if it doesn't exist
+      ansible.windows.win_file:
+        path: C:\temp
+        state: directory
+      when: not agent_dir.stat.exists 
+
+    - name: Ensure MSI file is present on the target machine
+      ansible.builtin.win_get_url:
+        url: "http://{{ device_ip }}:{{ msi_container_port }}/{{ msi_filename }}"
+        dest: "C:\\temp\\vfagentsetupx64.msi"
+        force: yes
+      when: not agent_dir.stat.exists 
+
+    - name: Install CyberArk EPM Agent
+      ansible.builtin.win_command:
+        cmd: >-
+          MsiExec.exe /i "C:\\temp\\vfagentsetupx64.msi"
+          INSTALLATIONKEY="{{ installation_key }}"
+          DISPATCHER_URL="{{ dispatcher_url }}"
+          SET_NAME="{{ set_name }}"
+          REGISTER_TOKEN="{{ register_token }}"
+          SET_ID="{{ set_id }}"
+          CONFIG_VERSION="{{ config_version }}"
+          IV="{{ iv }}"
+          SET_KEY="{{ set_key }}"
+          SIG="{{ sig }}" /qn
+      when: not agent_dir.stat.exists
+      
+- name: Install CyberArk EPM Agent on Ubuntu machines
+  hosts: ubuntu  # Define your Ubuntu hosts group in your inventory
+  become: yes  # Necessary to gain root privileges
+  gather_facts: no
+  vars:
+    device_ip: hostvars['localhost']['ansible_default_ipv4']['address']
+    agent_files_container_port: "4141"  # Port to serve files
+    installation_key: ""
+  tasks:
+    - name: Install debsig-verify
+      ansible.builtin.apt:
+        name: debsig-verify
+        state: present
+
+    - name: Create necessary directories for GPG keyring and policies
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /usr/share/debsig/keyrings/A83D2D8A08BEAA44
+        - /etc/debsig/policies/A83D2D8A08BEAA44
+
+    - name: Download GPG-KEY-CyberArk, EPM DEB and Config file from Docker-hosted server
+      ansible.builtin.get_url:
+        url: "http://{{ device_ip }}:{{ agent_files_container_port }}/{{ item }}"
+        dest: "/tmp/{{ item }}"
+      loop:
+        - GPG-KEY-CyberArk
+        - epm-ubuntu.x86_64.deb  # Adjust the filename as necessary
+        - CyberArkEPMAgentSetupLinux.config
+
+    - name: Import GPG-KEY-CyberArk
+      ansible.builtin.shell:
+        cmd: gpg --import /tmp/GPG-KEY-CyberArk
+
+    - name: Export the key into the debsig.gpg file
+      ansible.builtin.shell:
+        cmd: gpg --export A83D2D8A08BEAA44 > /usr/share/debsig/keyrings/A83D2D8A08BEAA44/debsig.gpg
+
+    - name: Download signing policy file
+      ansible.builtin.get_url:
+        url: "http://{{ device_ip }}:{{ agent_files_container_port }}/signing.pol"
+        dest: "/tmp/signing.pol"
+
+    - name: Move the signing.pol file to policies directory
+      ansible.builtin.command:
+        cmd: mv /tmp/signing.pol /etc/debsig/policies/A83D2D8A08BEAA44/signing.pol
+
+    - name: Verify the installer signature
+      ansible.builtin.shell:
+        cmd: debsig-verify --keyrings-dir /usr/share/debsig/keyrings /tmp/epm-ubuntu.x86_64.deb
+      ignore_errors: yes  # Optional: Consider what action to take if verification fails
+
+    - name: Install the CyberArk EPM agent DEB package
+      ansible.builtin.apt:
+        deb: "/tmp/epm-ubuntu.x86_64.deb"
+
+    - name: Activate the EPM agent
+      ansible.builtin.shell:
+        # Ensure there is a space between -k and the installation key value
+        cmd: "/opt/cyberark/epm/bin/epmcli --activate -c /tmp/CyberArkEPMAgentSetupLinux.config -k {{ installation_key }}"
+      register: activation_output
+      failed_when: activation_output.rc != 0 and 'already activated' not in activation_output.stdout
+
+    - name: NOTICE
+      ansible.builtin.debug:
+        msg: AGENT SHOULD HAVE BEEN INSTALLED, FOLLOWING TASKS DONT ALWAYS WORK
+
+    - name: Wait for a few seconds to ensure the EPM agent has started
+      ansible.builtin.pause:
+        seconds: 10  # Adjust the duration according to your needs
+
+    - name: Check that the EPM agent is running
+      ansible.builtin.shell:
+        cmd: "/opt/cyberark/epm/bin/epmcli --status"
+      register: epm_status
+
+    - name: Show EPM agent status
+      ansible.builtin.debug:
+        msg: "{{ epm_status.stdout }}"
