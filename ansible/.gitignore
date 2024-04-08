@@ -4,3 +4,4 @@ epm-ubuntu.x86_64.deb
 GPG-KEY-CyberArk
 CyberArkEPMAgentSetupLinux.config
 signing.pol
+set-env

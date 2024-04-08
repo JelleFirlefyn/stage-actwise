@@ -2,10 +2,8 @@
   hosts: localhost
   connection: local
   gather_facts: yes
+  become: yes
   vars:
-    agent_files_host_directory: "{{ playbook_dir }}/agent_installation_files"  # Generalized variable name
-    agent_files_container_path: "/usr/src/agent_installation_files"  # Path inside the container
-    agent_files_container_port: "4141"  # Port to serve files
     # List of files to be served - add all necessary filenames here
     agent_files:
       - vfagentsetupx64.msi
@@ -17,13 +15,13 @@
   tasks:
     - name: Ensure directory for agent installation files exists
       ansible.builtin.file:
-        path: "{{ agent_files_host_directory }}"
+        path: "{{ lookup('env', 'AGENT_FILES_HOST_DIRECTORY') }}"
         state: directory
 
     - name: Copy agent installation files to the directory
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ item }}"
-        dest: "{{ agent_files_host_directory }}/{{ item }}"
+        dest: "{{ lookup('env', 'AGENT_FILES_HOST_DIRECTORY') }}/{{ item }}"
         mode: '0644'
       loop: "{{ agent_files }}"
 
@@ -33,10 +31,10 @@
         image: python:3
         command: /bin/sh -c "python -m http.server"
         ports:
-          - "{{ agent_files_container_port }}:8000"
+          - "{{ lookup('env', 'AGENT_FILES_CONTAINER_PORT') }}:8000"
         volumes:
-          - "{{ agent_files_host_directory }}:{{ agent_files_container_path }}"
-        working_dir: "{{ agent_files_container_path }}"
+          - "{{ lookup('env', 'AGENT_FILES_HOST_DIRECTORY') }}:{{ lookup('env', 'AGENT_FILES_CONTAINER_PATH') }}"
+        working_dir: "{{ lookup('env', 'AGENT_FILES_CONTAINER_PATH') }}"
         detach: yes
         state: started
         recreate: yes
@@ -46,19 +44,18 @@
   hosts: windowshosts
   gather_facts: no
   vars:
-    installation_key: ""
-    dispatcher_url: ""
-    register_token: ""
-    set_id: ""
-    set_name: ""
-    config_version: ""
-    iv: ""
-    set_key: ""
-    sig: "="
-    msi_container_port: "4141"
-    msi_filename: "vfagentsetupx64.msi"
-    device_ip: hostvars['localhost']['ansible_default_ipv4']['address']
-    agent_dir: 'C:\Program Files\CyberArk\Endpoint Privilege Manager\Agent'
+    dispatcher_url: "{{ lookup('env', 'DISPATCHER_URL') }}"
+    register_token: "{{ lookup('env', 'REGISTER_TOKEN') }}"
+    set_id: "{{ lookup('env', 'SET_ID') }}"
+    set_name: "{{ lookup('env', 'SET_NAME') }}"
+    config_version: "{{ lookup('env', 'CONFIG_VERSION') }}"
+    iv: "{{ lookup('env', 'IV') }}"
+    set_key: "{{ lookup('env', 'SET_KEY') }}"
+    sig: "{{ lookup('env', 'SIG') }}"
+    msi_container_port: "{{ lookup('env', 'MSI_CONTAINER_PORT') }}"
+    msi_filename: "{{ lookup('env', 'MSI_FILENAME') }}"
+    device_ip: "{{ lookup('env', 'DEVICE_IP') }}"
+    agent_dir: "{{ lookup('env', 'AGENT_DIR') }}"
   tasks:
     - name: Check if CyberArk EPM Agent directory exists
       ansible.windows.win_stat:
@@ -87,7 +84,7 @@
       ansible.builtin.win_command:
         cmd: >-
           MsiExec.exe /i "C:\\temp\\vfagentsetupx64.msi"
-          INSTALLATIONKEY="{{ installation_key }}"
+          INSTALLATIONKEY="{{ lookup('env', 'INSTALLATION_KEY') }}"
           DISPATCHER_URL="{{ dispatcher_url }}"
           SET_NAME="{{ set_name }}"
           REGISTER_TOKEN="{{ register_token }}"
@@ -103,9 +100,7 @@
   become: yes  # Necessary to gain root privileges
   gather_facts: no
   vars:
-    device_ip: hostvars['localhost']['ansible_default_ipv4']['address']
-    agent_files_container_port: "4141"  # Port to serve files
-    installation_key: ""
+    device_ip: "{{ lookup('env', 'DEVICE_IP') }}"
   tasks:
     - name: Install debsig-verify
       ansible.builtin.apt:
@@ -123,7 +118,7 @@
 
     - name: Download GPG-KEY-CyberArk, EPM DEB and Config file from Docker-hosted server
       ansible.builtin.get_url:
-        url: "http://{{ device_ip }}:{{ agent_files_container_port }}/{{ item }}"
+        url: "http://{{ device_ip }}:{{ lookup('env', 'AGENT_FILES_CONTAINER_PORT') }}/{{ item }}"
         dest: "/tmp/{{ item }}"
       loop:
         - GPG-KEY-CyberArk
@@ -140,7 +135,7 @@
 
     - name: Download signing policy file
       ansible.builtin.get_url:
-        url: "http://{{ device_ip }}:{{ agent_files_container_port }}/signing.pol"
+        url: "http://{{ device_ip }}:{{ lookup('env', 'AGENT_FILES_CONTAINER_PORT') }}/signing.pol"
         dest: "/tmp/signing.pol"
 
     - name: Move the signing.pol file to policies directory
@@ -159,7 +154,7 @@
     - name: Activate the EPM agent
       ansible.builtin.shell:
         # Ensure there is a space between -k and the installation key value
-        cmd: "/opt/cyberark/epm/bin/epmcli --activate -c /tmp/CyberArkEPMAgentSetupLinux.config -k {{ installation_key }}"
+        cmd: "/opt/cyberark/epm/bin/epmcli --activate -c /tmp/CyberArkEPMAgentSetupLinux.config -k {{ lookup('env', 'INSTALLATION_KEY_UBUNTU') }}"
       register: activation_output
       failed_when: activation_output.rc != 0 and 'already activated' not in activation_output.stdout
 
@@ -167,15 +162,15 @@
       ansible.builtin.debug:
         msg: AGENT SHOULD HAVE BEEN INSTALLED, FOLLOWING TASKS DONT ALWAYS WORK
 
-    - name: Wait for a few seconds to ensure the EPM agent has started
-      ansible.builtin.pause:
-        seconds: 10  # Adjust the duration according to your needs
+    # - name: Wait for a few seconds to ensure the EPM agent has started
+    #   ansible.builtin.pause:
+    #     seconds: 10  # Adjust the duration according to your needs
 
-    - name: Check that the EPM agent is running
-      ansible.builtin.shell:
-        cmd: "/opt/cyberark/epm/bin/epmcli --status"
-      register: epm_status
+    # - name: Check that the EPM agent is running
+    #   ansible.builtin.shell:
+    #     cmd: "/opt/cyberark/epm/bin/epmcli --status"
+    #   register: epm_status
 
-    - name: Show EPM agent status
-      ansible.builtin.debug:
-        msg: "{{ epm_status.stdout }}"
+    # - name: Show EPM agent status
+    #   ansible.builtin.debug:
+    #     msg: "{{ epm_status.stdout }}"
