@@ -1,64 +1,67 @@
 # CyberArk EPM Agent Installation Playbook Documentation
 
-This Ansible playbook is designed to automate the installation of the CyberArk Endpoint Privilege Manager (EPM) Agent on both Windows and Ubuntu machines. It consists of two main parts: setting up a server to host the necessary installation files and executing the installation on the target machines.
+This Ansible playbook automates the installation of the CyberArk Endpoint Privilege Manager (EPM) Agent on Windows and Ubuntu machines. It includes setting up a server to host installation files and configuring machines to install the EPM agent, with optional proxy server setup for environments requiring proxy communication.
 
 ## Prerequisites
 
-Before running this playbook, ensure the following files are present in the same directory as the playbook:
-
-- `vfagentsetupx64.msi` (Windows installation package)
-- `epm-ubuntu.x86_64.deb` (Ubuntu installation package)
-- `GPG-KEY-CyberArk` (GPG key for package verification)
-- `CyberArkEPMAgentSetupLinux.config` (Configuration file for the Linux agent)
+Ensure the following files are in the same directory as the playbook:
+- `vfagentsetupx64.msi` (Windows installer)
+- `epm-ubuntu.x86_64.deb` (Ubuntu installer)
+- `GPG-KEY-CyberArk` (GPG key)
+- `CyberArkEPMAgentSetupLinux.config` (Linux agent config)
 - `signing.pol` (Signing policy file)
+
+## Using Environment Variables
+
+To streamline playbook execution and customization, define the following environment variables. Here's an example script to set them:
+
+```bash
+export AGENT_FILES_HOST_DIRECTORY="{{ playbook_dir }}/agent_installation_files"
+export AGENT_FILES_CONTAINER_PATH="/usr/src/agent_installation_files"
+export AGENT_FILES_CONTAINER_PORT="4141"
+export INSTALLATION_KEY="YourInstallationKeyHere"
+export DISPATCHER_URL="https://YourDispatcherURLHere"
+export REGISTER_TOKEN="YourRegisterTokenHere"
+export SET_ID="YourSetIDHere"
+export SET_NAME="YourSetNameHere"
+export CONFIG_VERSION="YourConfigVersionHere"
+export IV="YourIVHere"
+export SET_KEY="YourSetKeyHere"
+export SIG="YourSigHere"
+export MSI_CONTAINER_PORT="4141"
+export MSI_FILENAME="vfagentsetupx64.msi"
+export DEVICE_IP="{{ hostvars['localhost']['ansible_default_ipv4']['address'] }}"
+export AGENT_DIR="C:\\Program Files\\CyberArk\\Endpoint Privilege Manager\\Agent"
+export INSTALLATION_KEY_UBUNTU="YourInstallationKeyForUbuntuHere"
+```
 
 ## Playbook Structure
 
-**DISCLAIMER**: some variables are defined twice, in the case you want to change them, change them EVERYWHERE.
+**DISCLAIMER**: Variables are defined multiple times. Ensure all instances are consistently updated if changes are made.
 
-1. **Setup Server for Installation Files**: A Docker container is used to serve the necessary CyberArk EPM Agent installation files. This is useful in environments where direct download from the CyberArk website is not feasible or where centralized distribution is preferred.
+### 1. Setup Server for Installation Files
+A Docker container serves the necessary CyberArk EPM Agent installation files. This setup is useful where direct downloads from CyberArk or centralized distribution is preferred.
 
-    #### Variables:
-    - `agent_files_host_directory`: The directory on the Ansible control node where the installation files are stored.
-    - `agent_files_container_path`: The path inside the Docker container where the installation files will be mounted.
-    - `agent_files_container_port`: The port on which the Docker container will serve the installation files.
-    - `agent_files`: A list of the installation files to be served. This includes the MSI file for Windows, DEB package for Ubuntu, the GPG key, the Linux configuration file, and the signing policy.
+### 2. Install CyberArk EPM Agent on Windows Machines
+This section handles the installation of the EPM agent on Windows hosts, including pre-installation checks, downloading the MSI file, and executing the installation.
 
-
-2. **Install CyberArk EPM Agent on Windows Machines**: This section of the playbook handles the installation of the EPM agent on Windows hosts. It includes tasks to check if the agent is already installed, create a temporary directory, download the MSI file, and execute the installation.
-
-    #### Variables:
-    - `installation_key`: The key provided by CyberArk necessary for the agent's installation.
-    - `dispatcher_url`: The URL to the CyberArk dispatcher.
-    - `register_token`, `set_id`, `set_name`, `config_version`, `iv`, `set_key`, `sig`: Configuration details for the EPM Agent installation.
-    - `msi_container_port`: Port used to access the installation files from the Docker server.
-    - `msi_filename`: Name of the MSI file to be installed.
-    - `device_ip`: The IP address of the Docker server hosting the installation files.
-    - `agent_dir`: The directory path where the CyberArk EPM Agent is expected to be installed on the Windows machines.
-
-
-3. **Install CyberArk EPM Agent on Ubuntu Machines**: Similar to the Windows installation, this part deals with Ubuntu hosts. It includes steps for installing `debsig-verify`, setting up GPG keyrings and policies, downloading and verifying the DEB package, and activating the agent.
-
-    #### Variables:
-    - `device_ip`: The IP address of the Docker server hosting the installation 
-    - `agent_files_container_port`: The port on which the Docker container will 
-    - `installation_key`: Used during the agent's activation process on Ubuntu machines.
+### 3. Install CyberArk EPM Agent on Ubuntu Machines
+Similar to Windows, this section deals with installing the EPM agent on Ubuntu hosts. It includes preparing the environment, downloading the DEB package, verifying its signature, and executing the installation.
 
 ## Running the Playbook
-
-To run the playbook, use the following command:
+Execute the playbook with the following command:
 
 ```bash
-ansible-playbook cyberark_epm-agent_install.yaml -e "device_ip=10.0.0.1" -K
+ansible-playbook cyberark_epm-agent_install.yaml -K
 ```
+-K is required for tasks needing sudo privileges on Ubuntu machines.
 
-device_ip is required only when multiple network interfaces are present to specify which IP address should be used by the Docker container to serve the files. This ensures the playbook selects the correct IP address for file distribution.
--K is necessary for executing tasks that require sudo privileges on Ubuntu machines.
+## Notes
 
-# Notes
+- Conditional checks prevent re-installation where the CyberArk EPM Agent is already installed.
+- The NOTICE task in the Ubuntu installation section indicates potential troubleshooting steps for environmental or permissions issues.
+- Modify variables according to your CyberArk EPM deployment details.
 
-- The playbook uses conditional checks to prevent re-installation on machines where the CyberArk EPM Agent is already installed. For Windows, it checks for the agent directory, and for Ubuntu, the installation steps proceed only if certain conditions are not met (this logic needs to be implemented based on the output of the epmcli --status command or similar).
+## Proxy Server Setup
 
-- The NOTICE task indicates potential areas in the Ubuntu installation process that may not consistently succeed due to environmental factors or permissions issues. Subsequent tasks include a delay and a check for the agent's operational status as troubleshooting aids.
-
-- Modification of variables such as installation_key, dispatcher_url, register_token, etc., should be done in accordance with your specific CyberArk EPM deployment details.
+For environments requiring agents to communicate via a proxy, the beginning of the playbook outlines steps to configure a Squid proxy server. While the playbook prepares the environment, agents require manual configuration to use the proxy based on documentation available at: https://docs.cyberark.com/EPM/Latest/en/Content/Installation/ProxyConfiguration.htm
