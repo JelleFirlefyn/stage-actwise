@@ -13,43 +13,44 @@
       - signing.pol
 
   tasks:
-    - name: Install Squid on yum-based systems
-      ansible.builtin.yum:
-        name: squid
-        state: present
-      when: ansible_os_family == "RedHat"
+  # -UNCOMMENT IF PROXY SERVER IS NEEDED ON LOCAL MACHINE
+    # - name: Install Squid on yum-based systems
+    #   ansible.builtin.yum:
+    #     name: squid
+    #     state: present
+    #   when: ansible_os_family == "RedHat"
 
-    - name: Install Squid on apt-based systems
-      ansible.builtin.apt:
-        update_cache: yes
-        name: squid
-        state: present
-      when: ansible_os_family == "Debian"
+    # - name: Install Squid on apt-based systems
+    #   ansible.builtin.apt:
+    #     update_cache: yes
+    #     name: squid
+    #     state: present
+    #   when: ansible_os_family == "Debian"
 
-    - name: Enable, start and check status of Squid
-      ansible.builtin.systemd:
-        name: squid
-        enabled: yes
-        state: started
+    # - name: Enable, start and check status of Squid
+    #   ansible.builtin.systemd:
+    #     name: squid
+    #     enabled: yes
+    #     state: started
 
-    - name: Configure Squid to allow access to the EPM service only
-      ansible.builtin.blockinfile:
-        path: /etc/squid/squid.conf
-        block: |
-          # Change na110.epm.cyberark.com to the address of your EPM Manager
-          acl allowed_domain_epm_cyberark dstdomain na110.epm.cyberark.com
-          acl allowed_domain_epm_cyberark_login dstdomain login.epm.cyberark.com
-          http_access allow allowed_domain_epm_cyberark
-          http_access allow allowed_domain_epm_cyberark_login
+    # - name: Configure Squid to allow access to the EPM service only
+    #   ansible.builtin.blockinfile:
+    #     path: /etc/squid/squid.conf
+    #     block: |
+    #       # Change na110.epm.cyberark.com to the address of your EPM Manager
+    #       acl allowed_domain_epm_cyberark dstdomain na110.epm.cyberark.com
+    #       acl allowed_domain_epm_cyberark_login dstdomain login.epm.cyberark.com
+    #       http_access allow allowed_domain_epm_cyberark
+    #       http_access allow allowed_domain_epm_cyberark_login
 
-          # Denies all others, this is by default
-          http_access deny all
-        insertbefore: BOF # Ensures these lines are at the top of the file
+    #       # Denies all others, this is by default
+    #       http_access deny all
+    #     insertbefore: BOF # Ensures these lines are at the top of the file
 
-    - name: Reload Squid service
-      ansible.builtin.systemd:
-        name: squid
-        state: reloaded
+    # - name: Reload Squid service
+    #   ansible.builtin.systemd:
+    #     name: squid
+    #     state: reloaded
 
     - name: Ensure directory for agent installation files exists
       ansible.builtin.file:
