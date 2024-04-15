@@ -6,6 +6,16 @@ This project includes a set of Python scripts designed to encrypt files across a
 
 The encryption tool is part of a cybersecurity project to demonstrate the effectiveness of the CyberArk Endpoint Privilege Manager (EPM) in defending against Cryptolocker-style ransomware attacks.
 
+## Precompiled 
+
+For ease of use you could also use the [compiled binaries](https://github.com/JelleFirlefyn/stage-actwise/releases).
+
+It is recommended to set up a internal VM network for testing purposes. Incorrect use of these binaries might result in permanent data loss.
+
+Minimum requirements are: 1 victim machine, attacker server running flask on 10.0.0.1:5050.
+
+![img VM network architecture](img/network-infrastructure.png)
+
 ## How the ransomware works
 
 ![img flow](img/flow.png)
