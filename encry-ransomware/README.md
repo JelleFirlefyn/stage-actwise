@@ -1,4 +1,4 @@
-# Encryption Tool for Stage-Actwise Project
+# Encry PoC Ransomware
 
 This project includes a set of Python scripts designed to encrypt files across a user's operating system while avoiding system-critical files that could cause the system to crash. It also includes a server component to handle the distribution of public keys and a client component that encrypts files and communicates with the server.
 
