@@ -26,12 +26,11 @@ Set-ExecutionPolicy RemoteSigned
 To encrypt files, use the `encrypt.ps1` script. This script recursively encrypts all files in the specified directory, excluding the script itself and any system files.
 
 ``` cli
-.\encrypt.ps1 -FolderPath "C:\Path\To\Your\Directory" -Password "YourStrongPassword"
+.\encrypt.ps1 -Password "YourStrongPassword"
 ```
 
 Parameters:
 
-- `-FolderPath`: The path to the directory containing the files you wish to encrypt.
 - `Password`: The password used to generate the encryption key. Remember this password, as it will be required for decryption.
 
 ## Decryptig Files
@@ -39,12 +38,11 @@ Parameters:
 To decrypt your files, use the decrypt.ps1 script with the same password used for encryption.
 
 ``` powershell
-.\decrypt.ps1 -FolderPath "C:\Path\To\Your\Encrypted\Directory" -Password "YourStrongPassword"
+.\decrypt.ps1 -Password "YourStrongPassword"
 ```
 
 Parameters
 
-- `FolderPath`: The path to the directory containing the files you wish to decrypt.
 - `Password`: The password used during the encryption process.
 
 # Security Considerations
